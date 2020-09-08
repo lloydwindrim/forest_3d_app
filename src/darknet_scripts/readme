@@ -1,0 +1,24 @@
+- make sure setup.sh and /custom_setup are in darknet root dir
+- run from terminal:  ./setup.sh
+- edit header of auto_setup_yolo.sh (addresses of darknet root, images and annotations)
+- run in terminal: ./auto_setup_yolo.sh
+
+
+>>might want to set the number of epochs (i.e. max_batches). Guide:
+max_batches=2000*num_classes*(64/train_bs)   # train_bs currently set to 16
+steps=0.8*max_batches,0.9*max_batches
+
+>>currently setup for classes: tree, shrub and partial. If want to use different classes, make sure to change in yolov3-tiny-custom.cfg and yolov3-tiny-custom-test.cfg:
+lines 127: filters=(num_classes + 5)*3
+line 135: classes=num_classes
+line 171: filters=(num_classes + 5)*3
+line 177: classes=num_classes
+**These are the yolo detection heads
+
+
+>>notes on compiling darknet:
+- set gpu=1 in makefile
+- make
+- when using (e.g. to train or test), switch to sudo user
+
+
