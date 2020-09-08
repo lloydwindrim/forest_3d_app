@@ -2,7 +2,7 @@
 
 ![Alt text](media/drawing1.png?raw=true )
 
-This aim of this project is to characterise trees in 3D pointcloud data for forest inventory purposes. The code has been designed for:
+The aim of this project is to characterise trees in 3D pointcloud data for forest inventory purposes. The code has been designed for:
 - **accuracy**: it uses state-of-the-art machine learning methods and software tools
 - **speed**: built off the fast YoloV3 architecture, detection can be done with your CPU in reasonable time, and training models can be done with your GPU
 - **flexibility**: the software is made to be easily reconfigurable for different pointcloud types. It has been tested with pointclouds collected with traditional low resolution ALS, high resolution ALS and TLS, and dense photogrammetry.
@@ -12,7 +12,7 @@ All written in python, the app libraries can be found in src/Forest3D. Some exam
 
 
 Readme contents:
-- [Setup/Installation](#setup/installation)
+- [Setup/Installation](#setting-up-forest-3d-app)
 - [How to use the Forest 3D libraries](#how-to-use-the-forest-3d-libraries)
   - [Reading data](#reading-data)
   - [Ground characterisation and removal](#ground-characterisation-and-removal)
@@ -22,7 +22,7 @@ Readme contents:
 - [How to train your own detection model](#how-to-train-your-own-detection-model)
 - [Detection debugging tips](#detection-debugging-tips)
 - [Inventory results for several datasets](#inventory-results-for-several-datasets)
-- [Recent publications](#recent-publications)
+- [Related publications](#related-publications)
 
 
 ![Alt text](media/drawing6.png?raw=true "Tree delineation using Forest 3D is designed to be flexible to the type of pointcloud and scale from plots to large compartments.")
