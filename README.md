@@ -13,6 +13,7 @@ All written in python, the app libraries can be found in src/Forest3D. Some exam
 
 Readme contents:
 - [Setup/Installation](#setting-up-forest-3d-app)
+- [Quickstart](#quickstart)
 - [How to use the Forest 3D libraries](#how-to-use-the-forest-3d-libraries)
   - [Reading data](#reading-data)
   - [Ground characterisation and removal](#ground-characterisation-and-removal)
@@ -33,11 +34,11 @@ Readme contents:
 
 If you are using Ubuntu or Mac OS, clone the repository:
 ```
-git clone ...
+git clone https://github.com/lloydwindrim/forest_3d_app.git
 ```
 Recommendation: setup and run within a virtual environment to isolate the python packages from those on your system. To create a blank python3 virtual envrironment:
 ```
-cd ...
+cd forest_3d_app
 virtualenv -p python3 ./venv
 ```
 Python 3.5 definitely works. I have not tested newer versions of python. Activate the virtual environment:
@@ -81,6 +82,30 @@ usage: ./darknet <function>
 ```
 If you run into issues, look [here](https://pjreddie.com/darknet/install/) or google the error codes output by the console.
 
+
+## Quickstart
+
+Set your python interpreter to the virtual environement just created (if using the console just activate the virtual environment as above). 
+
+Create the following folders if you don't already have them (recommended in the forest_3d_ap root directory):
+- **outputs**: this will store anything the script generates (e.g. ground mesh, delineated pointlcoud, inventory csv, etc.)
+- **models/detection**: this holds the detection models. The subfolder /detection is recommended in preparation for future /stem_segmentation models.
+
+Note: you don't need to use these exact names. Make sure models/detection has a model in it. 
+
+Next, navigate to the example detection scripts. From the root:
+```
+cd src/example_detection_scripts
+```  
+Choose a script you want to run (based on the dataset). Edit three paths in the script:
+- path to the pointcloud (e.g. a las file)
+- path to the outputs folder (which you created before)
+- path to a detection model (e.g. 'path/to/models/detection/model1')
+
+Then you can run the script, for example:
+```
+python tumut_detect1.py
+```
 
 ## How to use the Forest 3D libraries
 
