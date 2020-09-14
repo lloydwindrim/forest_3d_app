@@ -29,7 +29,7 @@ class RasterDetector():
         for i, val in enumerate(doHisteq):
             self.doHisteq[i] = val
 
-        assert(isinstance(res,int))
+        assert(isinstance(res,float))
         self.res = res
 
         assert(len(gridSize)==3)
