@@ -10,6 +10,7 @@ output_dir = '/home/lloyd/Documents/projects/forest_3d_app/outputs'
 
 print("reading the data into python...")
 path = '/home/lloyd/Documents/datasets/lidar/hovermap_nzl/Interpine_02_Output_laz1_2_down5cm.las'
+#path = '/home/lloyd/Documents/datasets/lidar/hovermap_dogPark/DogParkBackpack_class_elev_5cm.las'
 xyz_data = lidar_IO.readFromLas(path, fields = ['x','y','z','Intensity'])
 MAX_RETURN_INTENSITY = 77.0
 xyz_data[:, 3] /= MAX_RETURN_INTENSITY

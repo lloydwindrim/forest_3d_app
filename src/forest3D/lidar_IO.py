@@ -37,7 +37,7 @@ def XYZreadFromCSV(filename,delimiter=',',x=3,y=4,z=5,label=None,returns=None):
 # accepts xyz data as a 2D array (points x dims)
 def writeXYZ(filename,xyz_data,delimiter=' '):
 	i = 0
-	with open(filename, 'wb') as csvfile:
+	with open(filename, 'w', newline='') as csvfile:
 		spamwriter = csv.writer(csvfile, delimiter=delimiter,
 			quotechar='|', quoting=csv.QUOTE_MINIMAL)
 		for i in range(np.size(xyz_data,0)):
@@ -46,7 +46,7 @@ def writeXYZ(filename,xyz_data,delimiter=' '):
 
 def writeXYZ_labelled(filename,xyz_data,labels,delimiter=' ',returns=None):
 	i = 0
-	with open(filename, 'wb') as csvfile:
+	with open(filename, 'w', newline='') as csvfile:
 		spamwriter = csv.writer(csvfile, delimiter=delimiter,
 			quotechar='|', quoting=csv.QUOTE_MINIMAL)
 		for i in range(np.size(xyz_data,0)):

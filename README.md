@@ -176,7 +176,7 @@ xyz_data_gr = ground_removal.removeGround(xyz_data,offset=[0,0,0],thresh=2.0,pro
 The array that is returned has the ground points removed from it (i.e. xyz_data_gr should have fewer rows than xyz_data). 
 A note on the function parameters:
 * If a path string is given to *proc_path*, it will output the ground as a ply mesh to that path. If no path is given, nothing will be output. It is useful to establish an output directory where you will store all of the outputs from running Forest 3D functions (such as the ground mesh).
-* *thresh* is a single float which gives the distance above the ground mesh under which points are removed. This can be set differently for different tasks, but its primary purpose is to remove the ground and ground vegetation to make other tasks easier. For example, if you are detecting mature pine trees, you should set this to 2 metres (note the units are the same as the pointcloud array units) so that ground vegetation is removed and not falsely detected as a tree. If you want to measure dbh, you will want a seperate ground-removed-pointcloud with a threshold of 1 metre. If you are detecting seedlines you could set this to 0.5 metres. 
+* *thresh* is a single float which gives the distance above the ground mesh under which points are removed. This can be set differently for different tasks, but its primary purpose is to remove the ground and ground vegetation to make other tasks easier. For example, if you are detecting mature pine trees, you should set this to at least 2 metres (note the units are the same as the pointcloud array units) so that ground vegetation is removed and not falsely detected as a tree. If you want to measure dbh, you will want a seperate ground-removed-pointcloud with a threshold of 1 metre. If you are detecting seedlines you could set this to 0.5 metres. 
 * *offset* is just a list of 3 values (x, y and z) to offset the pointcloud with (default [0,0,0]). This should only be used if you notice some array calculations on very large numbers are becoming unstable. Note, if you use a non-zero offset, the returned array will have the offset values. When saving outputs later, you will have the chance to remove the offset so the saved data has the original coordinate frame. 
 
 If you have intensity or colour for each pulse return information, you call the function with the additional *returns* parameter:
@@ -304,42 +304,99 @@ Acknowledgements to Interpine, UTAS, Forect Corp and the other project partners 
 
 ## How to train your own detection model
 
-To do this, you will need some have some raster data with labels and also have installed Darkent (see [Installing Darknet](#Installing Darknet) above).
+Training your own detection model comprising three main steps: generating raster images, labelling raster images with bounding boxes and training a model using darknet. 
+
+To do this, you will need some have some raster data with labels and also have installed Darkent (see [Installing Darknet](#installing-darknet) above).
 
 ### Generating training rasters
 
-The script **gen_training_rasters.py** can be used to generate raster jpg's from pointcloud data. There are a few different ways to run this script depending on the kind of data you have:
-* you have several pointcloud crops (not limited to circles) you wish to convert to rasters
-* you have a single large pointcloud and have a csv file with the locations of circle centers and radii
-* you have a single large pointcloud and have several csv's, one for each circle, that contain the cropping circle center and radius information
+The python scripts in **/gen_raster_scripts** can be used to generate raster jpg's from pointcloud data for training detection models. There are a few different ways to run one of these scripts depending on the kind of data you have:
+* you have several pointcloud crops (not limited to circles) you wish to convert to rasters. You might have cropped these yourself from a larger pointcloud. For example gen_training_rasters_tumut1.py converts pointcloud crops saved as .asc into rasters. 
+* you have a single large pointcloud and have a csv file with the locations of circle centers and radii. For example see gen_training_rasters_hovermap.py, where training_locations.csv contains the places to crop the pointcloud. This is the simplest way to generate rasters.
+* you have a single large pointcloud and have several csv's, one for each circle, that contain the cropping circle center and radius information. This is useful if you have field measurements for a number of plots. Each plot will have its own csv, where the first row specifies the location and size of the plot. See gen_training_rasters_hvp.py for an example, where each plot has its own training_stems_xxx.csv. 
+
+For the latter two methods, the detection_tools.circle_crop() function is useful:
+```
+xyz_crop_gr = detection_tools.circle_crop(xyz_data_gr,x_centre,y_centre,radius)
+```
+
+Note: the raster generation process includes ground removal. A similar threshold for removing points above the ground should be used in the detection script.
+
+The key output here is raster jpg's. As can be seen in the scripts in gen_raster-scripts/ there are several ways to do this. Whichever method you use, there are just a few important things which must always be done: 
+- output a raster config file. This is so that the rasterisation process you use to generate the training rasters can be replicated during detection. Put the raster config file in the relevant detection model folder.
+- save, output or record any pre-processing steps you do. For example, if you scale the intensity or colour between 0 and 1, you must also do this in the detection script. Another example, in gen_training_rasters_utas.py the principle compoenents of the colour channels are used to generate the training rasters. The function for transforming colour to principle components is saved as a pickle so that it can be used in the detect script (as opposed to calculating the principle components during detection using a slightly different function based on different data).
+- you must make sure each pointcloud crop will fit within the raster (see discussion on window size, grid size and resolution in [Tree Detection and Delineation](#tree-detection-and-delineation)). Calculate the maximimum size your pointcloud can be based on the grid size and resolution, and then give yourself an additional buffer as sometimes the pointcloud doesnt sit in the exact centre of the raster.
 
 
-Note, this process removes the ground from the pointclouds, as well as points above the ground up to a height threshold. This is to remove most of the ground vegetation from the rasters, making it easier to detect trees.
+**Raster Configuration**
 
-Many ways to do (a few shown in gen_rasters scripts). Just have to remember: output config, and make sure pointcloud fits within raster (gridsize and res)
+The same treeDetector.RasterDetector object used for detection is also used in the raster generation process:
+```
+config_dict = {'raster_layers': ['vertical_density', 'canopy_height'], 'support_window': [11, 7, 1],
+               'normalisation': 'rescale+histeq','doHisteq':[False,True],'res': 0.1, 'gridSize': [600, 600, 1000]}
+rasterMaker = treeDetector.RasterDetector(**config_dict)
+```
 
-Can generate rasters with annotations so assist with bounding box labels. E.g. if you have text files with differential gps measurements.
+The config dictionary contains the parameters of the raster. This config is saved as raster.config and used in the detection script to replicate the rasterisation process.
 
-### Raster Configuration
+Once the object has been created (e.g. rasterMaker in the above example) it can be used to rasterise a pointcloud crop:
+```
+raster = rasterMaker.rasterise(xyz_crop_gr,ground_pts=ground_pts)
+```
+You can then save each raster as a jpg with:
+```
+plt.imsave(os.path.join(output_dir,'raster_filename.jpg'), raster)
+```
+Finally, make sure to save the raster config file:
+```
+with open(os.path.join(output_dir,'raster_config.json'), 'w') as outfile:
+    json.dump(config_dict, outfile)
+```
+
+The treeDetector.RasterDetector object created has a specific way of rasterising pointcloud data to a three channel colour image, which is given by its construction parameters (populated by the config_dict):
+
+* raster_layers - a list of between one and three strings, where each string is a per channel rasterisation approach E.g. ['vertical_density', 'canopy_height', 'mean_colour1']. It is sufficient to only put one name instead of three if the 'cmap_jet' normalisation approach is used as it applies to all three channels. If another normalisation approach is used, then you can put 1-3 methods. Non-specified raster channels (e.g. you specify one or two methods and dont use 'cmap' normalisation) will be information-less rasters of uniform values (i.e. 0.5). A description of each raster layer is given below. 
+* support_window - a list of ints which specify the size of neighbourhoods used to rasterise points (default 1 - no neighbourhood used). This is useful for sparse pointclouds such as low res ALS.
+* normalisation - a single string specifying the normalisation approach. Options are 'rescale', 'rescale+histeq' and 'cmap_jet'. 'rescale' scales values between 0 and 1, whilst the 'histeq' addition equalises the histogram of values. 'cmap' scales a single raster to a three-channel image using the jet colourmap.
+* doHisteq - list of booleans relating to normalisation. Only applicable if using 'rescale+histeq' normalisation. This allows you to specify which of the three layers should have histogram normalisation.
+* res - single float specifying the resolution of each raster grid cell (metres/cell).
+* gridSize - list of 3 ints specifying the number of cells in each axis of the grid (x,y,z). Even though a raster image layer is 2D, the raster uses a third dimension (i.e. z-axis) to compute the raster values (e.g. the density along z columns).
+
+
+The raster layers available are:
+- 'vertical_density': the density of points along the z-axis. Useful if stems are visible in the scan as they produce a distinct density pattern for identifying a tree. 
+- 'max_height': captures the maximum height of points at locations in the xy-plane. Useful if canopy is visible. Heights are not normalised by the ground.
+- 'canopy_height': similar to 'max_height' but normalised by the ground. I.e ground normalised max height for locations in the xy-plane.
+- 'mean_colour1', 'mean_colour2', 'mean_colour3': the average colour along the z-axis (i.e. a value for each xy-location). The colour is either the return intensity or other colour of the point (e.g. r, g, b, principle component, etc.). If each point has multiple colour channels, then the number prefixing 'mean_colour' specifies the channel used. 
+- 'max_colour1', 'max_colour2', 'max_colour3': similar the 'mean_colourX' but taking the max colour along the z-axis. This is similar to vertical occupancy, but values are not restricted to 1 or 0.
+
+
+The res parameter has several implications. Often object detectors have a hard time detecting small objects in images. By lowering the res parameter (increasing the resolution) you can increase the size of the objects in the image, making them easier to detect. There is however a trade-off in speed to doing this. The smaller the resolution, the smaller the amount of coverage the sliding window has in the pointcloud. This makes detection slower. Lowering the res parameter also increases the sparsity of the point representation in the raster which could make it harder to detect objects. However, you can get around this by increasing the support window size.
+
+The detection speed is also linked to the number of raster layers that have to be created. The more raster layers that have to be created, the slower the detection will be. The fastest detector would only have a single raster layer.  
+
+
+**Leveraging field measurements to help with the labelling**
+
+If you have some field data, such as differential gps measurements of tree locations, then it is possible to make the bounding box labelling step easier for yourself by generating rasters with annotation markings on them. This removes much of the ambiguity from the labelling process as you just have to draw boxes around each marking. The bounding box label files (more on them in the next section) are only connected to the raster jpg's by filename (e.g. raster_0.jpg will be matched with raster_0.xml label file). This means you can generate rasters with annotations on them to help you create the label xml files, and then just re-generate the rasters without the annotations on them for training the detector (do not train on the annotated rasters). The rasters without the annotations will be linked to the label files as long as they have the same name.  
+
+An example script for generating rasters with annotations is **gen_training_rasters_hvp_anno.py**, which is similar to the raster generating script **gen_training_rasters_hvp.py**, but it generates rasters with dots on them indicating tree locations marked out in the field. The script assumes field measurements as a csv for each plot. Another script, **gen_training_rasters_utas_anno.py**, assumes all field measurements are in a single csv. 
+
+Use a function to convert field locations from global pointcloud coordinates to raster coordiantes. With the raster coordinates of object locations you can highlight a set of pixels in the raster around that location or otherwise.
+```
+raster,centre = rasterMaker.rasterise(xyz_crop_gr,ground_pts=ground_pts,returnCentre=True)
+raster_coords = treeDetector.pcd2rasterCoords(gt_coords, config_dict['gridSize'], config_dict['res'],centre)
 
 ```
-rasterTreeDetector = treeDetector.RasterDetector( raster_layers, support_window=[1,1,1],normalisation='rescale',doHisteq=[True,True,True],res=0.2,gridSize=[600, 600, 1000] )
-```
-The object created has a specific way of rasterising pointcloud data to a three channel colour image, which is given by its construction parameters:
-* raster_layers - a list of between one and three strings, where each string is a per channel rasterisation approach E.g. ['vertical_density', 'canopy_height', 'mean_colour1']. It is sufficient to only put one name instead of three if the 'cmap_jet' normalisation approach is used as it only requires one channel. If another normalisation approach is used, then non-specified raster channels will be information-less rasters of uniform values (i.e. 0.5). Options are: 'vertical_density', 'max_height', 'canopy_height', 'mean_colour1', 'mean_colour2', 'mean_colour3', 'max_colour1', 'max_colour2', 'max_colour3'
-* support_window - a list of ints which specify the size of neighbourhoods used to rasterise points. This is useful for very sparse pointclouds such as low res ALS.
-* normalisation - a single string specifying the normalisation approach. Options are 'rescale', 'rescale+histeq' and 'cmap_jet'.
-* doHisteq - list of booleans relating to normalisation. Only applicable if using 'rescale+histeq' normalisation.
-* res - float specifying the resolution of each raster grid cell (in metres)
-* gridSize - list of ints specifying the number of cells in each axis of the grid (x,y,z).
+Here gt_coords is an array of x and y locations in the pointcloud that were marked out in the field. raster_coords are the row and column in the raster of each location.
 
-res determines speed, size of objects and sparsity.
+![Alt text](media/drawing7.png?raw=true )
 
-Smaller res increases object size (easier for detector), but descreases speed and increases sparsity (can be counteracted with larger support windows)
+**Re-using labels with different raster configs**
 
-max_colour1 refers to first colour input, max_colour2 refers to second,etc. 
+For similar reasons as to why you can generate rasters with annotations to help with labelling, if you already have a set of raster jpg's and corresponding label xml files, but you want to try out training with a different raster config, it is possible to re-use the same label files. As long as the names match, and the new raster configuration does not change the position of any of the trees (e.g. do not change the grid size or resolution), then the xml files will still give the correct labels. This is because the xml files only describe the position and class of objects in rasters and record nothing about the raster itself. This gives you the flexibility to change the raster layers, support window and normalisation method without having to re-label anything!
 
-description of each raster layer
+
 
 ### Labelling rasters with bounding boxes
 
@@ -354,25 +411,76 @@ If you are using the detection script *as-is*, it is very important to use these
 
 Make sure the bounding box label files (the .xml files) have the same name as their corresponsing image (.jpg) file. This should happen by default if you use the labelImg tool.
 
-*Talk about how gen_rasters can output rasters with detections highlighted (using other annotation information)
-
 ### Training a yolov3 model with Darknet
 
 Make sure you have Darknet installed. If you are training your first model, from forest_3d_app/src/darknet_scripts copy setup.sh and the custom_setup/ folder to your Darknet root. Then run:
 ```
 ./setup.sh
 ```
-This copies two python scripts and two config files to where they need to be in the Darknet root. It will also download some weights pre-trained on Imagenet to initialise the convolutional layers for yolov3. The config files specify the architecture and training configuration for training and prediction. The python scripts are for converting the bounding box xml labels from PASCAL VOC format to YOLO format, and splitting data into test and training data. 
+This copies two python scripts and four config files to where they need to be in the Darknet root. It will also download some weights pre-trained on Imagenet to initialise the convolutional layers of yolov3. These are downloaded to a folder called 'models'. The config files specify the architecture and training configuration for training and prediction. Config files are available for both the yolov3 and yolov3-tiny architectures. The python scripts are for converting the bounding box xml labels from PASCAL VOC format to YOLO format, and splitting data into test and training data. 
 
-Edit header. 
-Change epochs.
+Open up the shell script auto_setup_yolo.sh (in forest_3d_app/src/darknet_scripts). This script does all of the heavy lifting for training your detection model. Open it with a text editor and edit the following paths in the header:
+- darknet_location: the address of the darknet directory root
+- img_location: the address of the folder containing your raster jpg's
+- anno_location: the address of the folder containing your bounding box label xml files 
 
-Different class num
+Then run the shell script in the console:
+```
+./auto_setup_yolo.sh
+```
+This will create a folder called tmp_yolo which has everything needed for training. The console should also start displaying training information such as losses and the epoch number (corresponding to batch number in the config file, where max_batches is the total number of epochs that will run). This will stop when it is finished training. Depending on your GPU, this might take 12 hours to several days. It took about 24 hours to run 200,000 batches (config default) on my Nvidia 1080ti GPU. 
 
-train until 0.06
+When it is finished, you should have a folder called tmp_yolo/deploy. This folder has three out of the four files you will need to do detection (the other being raster.config): yolov3.cfg, yolov3.weights and obj.names. Move these files to a folder a new detection model folder in your project directory. The tmp_yolo/backup folder also has some .weights model files saved at earlier epochs. You could experiment with these models as well.
 
-Instructions for using custom classes: two places in auto_setup_yolo.sh where you need to change the class names. Order here is important (determines class numbers)
-The file obj.names gives the classes and their class numbers (based on their index)
+To train future models, you don't need to run setup.sh again. Just modify the auto_setup_yolo.sh script and/or modify the custom config files in the cfg folder of the darknet directory. Make sure to rename your tmp_yolo folder created during the last training session of you want to keep it as it will be overwritten otherwise.
+
+**Using yolov3 instead of yolov3-tiny**
+
+By default the auto_setup_yolo.sh is actually set to use a variant of yolov3 called yolov3-tiny. It is a slightly smaller architecture that runs faster with a small performance trade-off. You can quite easily switch to the normal yolov3 architecture - you just have to modify the config files that are pulled across by the auto_setup_yolo.sh script:
+```
+cp cfg/yolov3-custom.cfg tmp_yolo/cfg/yolov3-tiny-custom.cfg
+cp cfg/yolov3-custom-test.cfg tmp_yolo/cfg/yolov3-tiny-custom-test.cfg
+```
+They will still have 'tiny' in their name, but the contents will now reflect the non-tiny yolov3 architecture.
+
+
+**Modifying the training configuration**
+
+If you want to modify the training configuration in some way, than you need to do so using the .cfg files in the cfg folder of the darknet directory or in the auto_setup_yolo.sh script. The file yolov3-tiny-custom.cfg is used for training and yolov3-tiny-custom-test.cfg is used for prediction (i.e. detection). 
+To change the number of epochs, batchsize or subdivisions, do so in the training cfg file (e.g. yolov3-tiny-custom.cfg ). 
+
+An epoch is considered one training cycle through the entire training dataset. Therefore your batchsize and dataset size will dictate how many batches (or iterations) it takes to complete one epoch, and the number of epochs is a function of the number of batches (i.e iterations) and the batchsize.
+ 
+- number of batches or iterations: this is set with max_batches. Note, whatever you put as max_batches, you should put steps as 0.8 * max_batches and 0.9 * max_batches.
+- batchsize: set with the batch parameter. Default is 16. Make sure you look at the uncommented line in the training config (not the commented out line).
+- subdivisions: this dictates how a batch is further split to train on (e.g. default subdivision of 2 with a batch size of 16 means 8 samples loaded into memory for backpropagation at a time). This parameter is important for memory limitations. If youre GPU doesn't have the memory to handle your batchsize, then you should increase this parameter to reduce the memory load.
+  
+I used max_batches=200,00 with typically small training sets of around 20 samples. 
+
+To change the training/validation split, do so in auto_setup_yolo.sh in the line that says:
+```
+python scripts/split_train_test.py -d "$img_location" -y "$darknet_location" -s "10"
+```
+(default is 10 meaning 90/10% training/validation split). The rasters used for training and validation are chosen randomly but get specified in tmp_yolo/train.txt and tmp_yolo/val.txt which get generated once you run auto_setup_yolo.sh. 
+
+
+**Training to detect different classes**
+
+The scripts are setup to train a detector on 3 classes: "tree","shrub" and "partial". If you want to train a detector on different classes to these, there are a few things you must modify:
+
+In auto_setup_yolo.sh:
+- change num_classes=3 in the header 
+- modify the line to include your class names:
+```
+python scripts/voc_label_custom.py -d "$anno_location" -c "tree,shrub,partial"
+```
+The order of classes here establishes the class indexes. This determines the order they appear in they obj.names generated file.
+
+Inside both config files (training and prediction) make the following changes:
+- classes=3
+- in the [convolutional] block before each [yolo] block, change filters=(num_classes + 5) * 3  (note: evaluate the expression). E.g. for 3 classes this is filters=24
+
+In yolov3-tiny there are 2 locations to make each of these changes in each config file. In yolov3, there are 3 locations for each change. These changes modify the architecture for the different number of classes.
 
 
 
@@ -388,6 +496,7 @@ Check to see if the correct classes are being picked up, the bounding boxes are 
 
 Once you know the detector works, the next test looks for errors in the pointcloud processing. Crop out a small section of the pointcloud using a tool like [CloudCompare](https://www.danielgm.net/cc/) and run that las file through your code. Look at the delineated pointcloud and see if it matches what you saw with the raster image test. If not, you might need to look at parameters like overlap_thresh in the sliding_window() method. There could also be a problem with your python script (e.g. data is being read in wrong, not rasterising properly). If that is the case you need to step through your code and check the outputs at each stage to make sure they are what you expect.
 
+If you are getting lots of false positive detections from ground vegetation, experiment with a higher ground point removal threshold.
 
 ## Inventory Results for Several Datasets
 

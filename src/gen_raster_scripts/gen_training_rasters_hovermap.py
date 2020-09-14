@@ -33,7 +33,7 @@ config_dict = {'raster_layers': ['vertical_density','mean_colour1'], 'support_wi
 rasterMaker = treeDetector.RasterDetector(**config_dict)
 
 # read in training crop info from csv
-path = '/home/lloyd/Documents/datasets/lidar/hovermap_nzl/debug_locations.csv'
+path = '/home/lloyd/Documents/datasets/lidar/hovermap_nzl/training_locations.csv'
 plot_details = utilities.read_csv(path,header_rows=[0])
 num_plots = np.shape(plot_details['data'])[0]
 

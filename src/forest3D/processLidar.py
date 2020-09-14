@@ -31,6 +31,7 @@ def gaussian_kernel(size,mu=0.0,sigma=1.0):
     g = np.exp(-((d - mu) ** 2 / (2.0 * sigma ** 2)))
     return g
 
+
 class database_points_pointlabels():
 
     def __init__(self, xyz_list=None,labels=None,returns=None, numClasses=None, batchsize=None ):
@@ -1093,6 +1094,7 @@ class ProcessPC():
 
     def pcd2rasterCoords(self,pts,gridSize,res):
         # make sure to pass in pts with shape [numSamples x numCoordinates]
+        # returns dictionary with 'col' and 'row' elements, which are 1d np.arrays
 
         if np.shape(res) == ():
             res = np.tile(res,(np.shape(pts)[1]))

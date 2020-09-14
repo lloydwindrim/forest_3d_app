@@ -29,7 +29,10 @@ class RasterDetector():
         for i, val in enumerate(doHisteq):
             self.doHisteq[i] = val
 
+        assert(isinstance(res,int))
         self.res = res
+
+        assert(len(gridSize)==3)
         self.gridSize = np.array(gridSize)
 
     def sliding_window(self,detector_addr,xyz_data,colour_data=None,ground_pts=None,windowSize = [100,100],stepSize = 80,
@@ -88,7 +91,7 @@ class RasterDetector():
             return labels
 
 
-    def rasterise(self,xyz_data,colour_data=None,ground_pts=None):
+    def rasterise(self,xyz_data,colour_data=None,ground_pts=None,returnCentre=False):
 
         if colour_data is None:
             xyz_clr_data = xyz_data
@@ -99,7 +102,10 @@ class RasterDetector():
 
         raster_stack, centre = self._rasterise(xyz_clr_data, ground_pts=ground_pts)
 
-        return raster_stack
+        if returnCentre:
+            return raster_stack, centre
+        else:
+            return raster_stack
 
 
     def _rasterise(self,data,ground_pts=None):
@@ -232,3 +238,20 @@ def get_raster(method_name,data,support_window,res,gridSize,ground_pts=None):
 
         return 0.5 * np.ones((gridSize[:2])),None
 
+
+def pcd2rasterCoords(pts,gridSize,res,centre):
+    # make sure to pass in pts with shape [numSamples x numCoordinates]
+    # returns dictionary with 'col' and 'row' elements, which are 1d np.arrays
+
+    if np.shape(res) == ():
+        res = np.tile(res,(np.shape(pts)[1]))
+
+    centred_pts = pts - centre[:np.shape(pts)[1]]
+
+    # note: x point corresponds to row (first index) in the og grid -> therefore y (and vice-versa for y)
+    coords = {}
+    coords['row'] = np.array( np.clip( np.floor( ( centred_pts[:,0]-(-gridSize[0]/2.*res[0]) )/res[0] ), 0, gridSize[0]-1 ), dtype=int) #y
+    coords['col'] = np.array( np.clip( np.floor( ( centred_pts[:,1]-(-gridSize[1]/2.*res[1]) )/res[1] ), 0, gridSize[1]-1 ), dtype=int) #x
+    if np.shape(pts)[1] == 3:
+        coords['z'] = np.array(np.clip(np.floor((centred_pts[:, 2] - (-gridSize[2] / 2. * res[2])) / res[2]), 0, gridSize[2] - 1),dtype=int)
+    return coords
