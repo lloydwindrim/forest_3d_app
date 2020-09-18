@@ -3,12 +3,12 @@
     Required packages: scikit-learn, scipy, numpy
 
     This library contains a class for individual pointclouds ( ProcessPC() ), and classes for lists of pointclouds
-    ( database_points_pointlabels() , database_points() , database_binaryVoxels() , database_binaryVoxels_pointlabels() ).
+    ( iterator_points_pointlabels() , iterator_points() , iterator_binaryVoxels() , iterator_binaryVoxels_pointlabels() ).
 
     ProcessPC() is useful for various applications where you want a single pointcloud to be an object, and you wish you
     to mutate that object in different ways (e.g. voxelise, rasterise, normalise, rotate, etc.)
 
-    The database classes are designed for machine learning applications. They are useful as iterators when you want to
+    The iterator classes are designed for machine learning applications. They are useful as iterators when you want to
     use several pointclouds to train (or predict with) a machine learning model (e.g. return the next batch of
     pointclouds to train on).
 
@@ -32,7 +32,7 @@ def gaussian_kernel(size,mu=0.0,sigma=1.0):
     return g
 
 
-class database_points_pointlabels():
+class iterator_points_pointlabels():
 
     def __init__(self, xyz_list=None,labels=None,returns=None, numClasses=None, batchsize=None ):
 
@@ -289,7 +289,7 @@ class database_points_pointlabels():
 
         random.shuffle(self.pc_list)
 
-class database_points():
+class iterator_points():
 
     def __init__(self, xyz_list=None,labels=None, batchsize=None ):
 
@@ -429,9 +429,9 @@ class database_points():
         else:
             random.shuffle(self.pc_list)
     
-class database_binaryVoxels_pointlabels():
+class iterator_binaryVoxels_pointlabels():
 
-    def __init__(self, xyz_list=None,labels=None,returns=None, res=0.1, gridSize=np.array( (32,32,32) ), numClasses=None, batchsize=None):
+    def __init__(self, xyz_list=None,labels=None,returns=None, res=0.1, gridSize=[32,32,32], numClasses=None, batchsize=None):
 
         # make sure to input more than one pcd
         self.data_num = len(xyz_list)
@@ -452,7 +452,7 @@ class database_binaryVoxels_pointlabels():
             else:
                 self.pc_list.append(ProcessPC(xyz_data=xyz_list[i],pc_labels=labels[i],pc_returns=returns[i]))
         self.res=res
-        self.gridSize=gridSize
+        self.gridSize=np.array(gridSize)
         if labels is None:
             self.flag_label = 0
         else:
@@ -632,9 +632,9 @@ class database_binaryVoxels_pointlabels():
         random.shuffle(self.pc_list)
 
 
-class database_binaryVoxels(): # onehot, object labels
+class iterator_binaryVoxels(): # onehot, object labels
 
-    def __init__(self, xyz_list=None,labels=None, res=0.1, gridSize=np.array( (32,32,32) ), batchsize=None):
+    def __init__(self, xyz_list=None,labels=None, res=0.1, gridSize=[32,32,32], batchsize=None):
 
         self.data_num = len(xyz_list)
         self.nb_class = np.max(labels)+1
@@ -644,7 +644,7 @@ class database_binaryVoxels(): # onehot, object labels
         for i in range(len(xyz_list)):
             self.pc_list.append(ProcessPC(xyz_list[i]))
         self.res=res
-        self.gridSize=gridSize
+        self.gridSize=np.array(gridSize)
 
         if batchsize is not None:
             self.batchsize = batchsize

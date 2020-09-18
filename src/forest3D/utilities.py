@@ -1,5 +1,6 @@
 import csv
 import numpy as np
+import matplotlib.pyplot as plt
 
 def read_csv(filename,header_rows=[-1]):
 
@@ -30,5 +31,27 @@ def write_csv(filename,data,header=None):
 
 
 
+class plot_vars:
 
+    def __init__(self, var_list, save_addr):
+
+        self.var_list = var_list
+        self.save_addr = save_addr
+        self.epochs = []
+
+        self.vars = {}
+        for i,var_name in enumerate(self.var_list):
+            self.vars[var_name] = []
+
+    def update_plot(self, epoch, new_vars):
+        self.epochs.append(epoch)
+        plt.figure()
+        for i, var_name in enumerate(self.var_list):
+            self.vars[var_name].append(new_vars[i])
+            plt.plot(self.epochs, self.vars[var_name], label=self.var_list[i])
+        plt.legend(loc='upper center', bbox_to_anchor=(0.5, 1.05),ncol=3)
+        plt.xlabel('epoch')
+        plt.ylabel('loss')
+        plt.savefig(self.save_addr)
+        plt.close()
 

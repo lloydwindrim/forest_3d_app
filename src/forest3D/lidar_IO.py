@@ -173,7 +173,7 @@ def WriteOG(og, filename=None, res=1, offset=[0,0,0], ogOffset=np.array([0,0,0])
 	classes = np.unique(og)[1:]
 	gridSize = np.shape(og)
 	for i in classes:
-		pc = np.array(np.nonzero(og==i))
+		pc = np.array(np.nonzero(og==i),dtype=np.float)
 		#if ogOffset is not None:
 		pc -= (np.array(gridSize)[:,np.newaxis])/2 # was conditioned on ogOffset not none
 		nPoints = np.shape(pc)[1]

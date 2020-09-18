@@ -75,6 +75,7 @@ class RasterDetector():
                     # aggregate over windows
                     box_store = np.vstack((box_store, bb_coord[classes == classID, :]))
 
+        sys.stdout.write("\n")
         box_store = box_store[1:, :]
 
         # remove overlapping boxes

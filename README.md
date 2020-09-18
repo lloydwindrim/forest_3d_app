@@ -8,7 +8,7 @@ The aim of this project is to characterise trees in 3D pointcloud data for fores
 - **flexibility**: the software is made to be easily reconfigurable for different pointcloud types. It has been tested with pointclouds collected with traditional low resolution ALS, high resolution ALS and TLS, and dense photogrammetry.
 - **scalability**: developed for a range of scan sizes from single plots to large compartments
 
-All written in python, the app libraries can be found in src/Forest3D. Some example scripts that use the libraries can be found in src/example_detection_scripts. These scripts call pre-trained models to detect and delineate trees in different pointclouds. If the pre-trained models are not good enough and you want to train your own models, this readme explains how you can do that too.
+All written in python, the app libraries can be found in src/Forest3D. Some example scripts that use the libraries can be found in src/example_detection_scripts. These scripts call pre-trained models to detect and delineate trees in different pointclouds. If the pre-trained models are not good enough and you want to train your own models, this readme explains how you can do that too. 
 
 
 Readme contents:
