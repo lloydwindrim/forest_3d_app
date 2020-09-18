@@ -243,7 +243,7 @@ By default the method returns a pointcloud array of size Nx1, whose values delin
 
 The method can also return the bounding boxes instead of labelled points if the method argument returnBoxes=True. This returns a Mx4 numpy array, where M is the number of detections. The bounding boxes are of the form [ymin xmin ymax xmax] (in the units and coordinate space of the pointcloud). If you want to label the pointcloud with these bounding boxes, use:
 ```
-labels = detection_tools.label_pcd_from_bbox(xyz_data, boxes, xyxy=True)
+labels = detection_tools.label_pcd_from_bbox(xyz_data, boxes, yxyx=True)
 ```
 
 Some other arguments of RasterDetector.sliding_window() that can be tuned are:
