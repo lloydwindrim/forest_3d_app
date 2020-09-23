@@ -855,6 +855,7 @@ class ProcessPC():
     def occupancyGrid_Labels( self ):
 
         # cube 0: background, 1: foliage_clutter, 2:stem
+        # class label 0: foliage, 1: lower stem, 2: upper stem, 3: clutter
         self.og_labels[0, ...] = 1
         self.og_label_util(1, 0, 1)
         self.og_label_util(1, 3, 1)

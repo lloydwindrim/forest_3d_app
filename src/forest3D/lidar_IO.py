@@ -256,7 +256,7 @@ def og2xyz(og, og_mask, res=1, ogOffset=np.array([0,0,0]) ):
 
 	gridSize = np.shape(og)
 
-	pc = np.array(np.nonzero(og_mask == 1))
+	pc = np.array(np.nonzero(og_mask == 1),dtype=np.float)
 	# if ogOffset is not None:
 	pc -= (np.array(gridSize)[:, np.newaxis]) / 2  # was conditioned on ogOffset not none
 	nPoints = np.shape(pc)[1]
