@@ -1,3 +1,11 @@
+'''
+    Author: Dr. Lloyd Windrim
+    Required packages: numpy
+
+    Simple utlility functions e.g. reading and writing csv's
+
+'''
+
 import csv
 import numpy as np
 import matplotlib.pyplot as plt

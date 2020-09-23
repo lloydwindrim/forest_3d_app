@@ -1,3 +1,11 @@
+'''
+    Author: Dr. Lloyd Windrim
+    Required packages: numpy, opencv-python
+
+    Functions for calling a object detection models (e.g. darknet yolo) into python.
+
+'''
+
 import numpy as np
 import cv2
 

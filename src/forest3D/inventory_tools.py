@@ -1,3 +1,11 @@
+'''
+    Author: Dr. Lloyd Windrim
+    Required packages: numpy
+
+    Functions for computing inventory attributes.
+
+'''
+
 import numpy as np
 from forest3D import processLidar
 

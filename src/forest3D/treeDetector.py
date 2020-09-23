@@ -1,3 +1,11 @@
+'''
+    Author: Dr. Lloyd Windrim
+    Required packages: numpy, skimage, matplotlib
+
+    Class for doing tree detection.
+
+'''
+
 # custom libraries
 from forest3D import detection_tools,processLidar
 from forest3D.object_detectors import detectObjects_yolov3 as detectObjects

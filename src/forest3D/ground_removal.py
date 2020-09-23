@@ -1,5 +1,5 @@
 '''
-    Authors: Dr. Lloyd Windrim
+    Authors: Dr. Lloyd Windrim and Dr. Mitch Bryson
     Required packages: numpy, scipy, scikit-learn
 
     The primary purpose of this module is to remove and load the ground. The function removeGround() uses the TreePointCloud()
