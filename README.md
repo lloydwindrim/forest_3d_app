@@ -10,8 +10,9 @@ The aim of this project is to characterise trees in 3D pointcloud data for fores
 
 All written in python, the app libraries can be found in src/Forest3D. Some example scripts that use the libraries can be found in src/example_detection_scripts. These scripts call pre-trained models to detect and delineate trees in different pointclouds. If the pre-trained models are not good enough and you want to train your own models, this readme explains how you can do that too. 
 
+Authors: Dr. Lloyd Windrim and Dr. Mitch Bryson
 
-Readme contents:
+**Readme contents**:
 - [Setup/Installation](#setting-up-forest-3d-app)
 - [Quickstart](#quickstart)
 - [How to use the Forest 3D libraries](#how-to-use-the-forest-3d-libraries)
@@ -19,8 +20,10 @@ Readme contents:
   - [Ground characterisation and removal](#ground-characterisation-and-removal)
   - [Tree detection and delineation](#tree-detection-and-delineation)
   - [Inventory](#inventory)
-- [Pre-trained detection models](#pre-trained-detection-models)
+  - [Stem Segmentation](#stem-segmentation)
+- [Pre-trained models](#pre-trained-models)
 - [How to train your own detection model](#how-to-train-your-own-detection-model)
+- [How to train your own segmentation model](#how-to-train-your-own-segmentation-model)
 - [Detection debugging tips](#detection-debugging-tips)
 - [Inventory results for several datasets](#inventory-results-for-several-datasets)
 - [Related publications](#related-publications)
@@ -52,6 +55,13 @@ pip install -r requirements.txt
 
 If you are using Windows, download the repository from Github, and then install the python packages: numpy, scipy, scikit-learn, scikit-image, matplotlib, laspy, plyfile, opencv-python. Check requirements.txt for the correct versions of each.
 
+**Stem Segmentation**
+
+If you want to use the stem segmentation functionality, run the following command instead:
+```
+pip install -r requirements_seg.txt
+```
+This installs the packages needed for Forest3D with the addional packages for tensorflow and its dependecies that are needed for stem segmentation. By default, tensorflow 2.X is installed, but you can also use the older tensorflow 1.X if you want - both will work. The code is designed to check which version you have and import the legacy libraries if you are using version 1.X.
 
 ### Installing Darknet (Optional)
 
@@ -100,11 +110,25 @@ cd src/example_detection_scripts
 Choose a script you want to run (based on the dataset). Edit three paths in the script:
 - path to the pointcloud (e.g. a las file)
 - path to the outputs folder (which you created before)
-- path to a detection model (e.g. 'path/to/models/detection/model1')
+- path to a detection model (e.g. 'path/to/models/stem_segmentation/tumut1')
 
 Then you can run the script, for example:
 ```
 python tumut_detect1.py
+```
+
+**Adding in segmentation**
+
+If you want to run a full pipeline which does detection and segmentation, then navigate to the example full pipeline scripts. From the root:
+```
+cd src/example_full_pipeline_scripts
+```  
+modify the same three paths as in the detection case, with the addition of:
+- path to the segmentation model (e.g. 'path/to/models/detection/model1')
+
+Then run the script:
+```
+python tumut_pipeline.py
 ```
 
 ## How to use the Forest 3D libraries
@@ -114,7 +138,7 @@ There are several Forest 3D libraries you can use by importing them into a pytho
 import sys
 sys.path.insert(0, 'path/to/forest_3d_app/src')
 
-from forest3D import lidar_IO,ground_removal,treeDetector,detection_tools,processLidar,inventory_tools
+from forest3D import lidar_IO,ground_removal,treeDetector,detection_tools,processLidar,inventory_tools,stemSegmenter
 ```
 
 There are libraries for:
@@ -122,10 +146,11 @@ There are libraries for:
 - removing, exporting and importing the ground
 - rasterising pointclouds
 - detecting and delineating trees
+- segmenting stem and foliage points
 - useful classes for representing pointclouds
 - computing inventory
 
-There are also a range of useful tools and utilities for doing a variety of things.
+There are also a range of useful tools and utilities for doing a variety of other things.
 
 
 ### Reading data
@@ -163,6 +188,9 @@ xyz_data[:, 3:] /= 255.0
 ```
 
 ### Ground Characterisation and Removal
+
+![Alt text](media/gr.png?raw=true "Characterisation of the ground with a mesh surface and removal of points within a threshold above the ground.")
+
 
 The first major processing step is ground characterisation and removal. Using Forest 3D's ground removal library we can remove the ground points from our pointcloud array, save them as a seperate mesh file, and then read them back into python for future use (e.g. ground normalisation for canopy height models or tree heights for inventory).
 ```
@@ -285,9 +313,78 @@ utilities.write_csv(os.path.join(output_dir,'inventory.csv'),inventory,header='x
 ```
 It is possible to load this csv into a 3D viewer like [CloudCompare](https://www.danielgm.net/cc/), where it can be overlaid with the original pointcloud.
 
-## Pre-trained Detection Models
 
-Several detection models have been trained on forest pointcloud data and are available for use. The table describes each model. The appropriate model for your dataset should be the model trained on data most similar to your own dataset. Make sure you have return intensity or colour information for each point if the model requires it. 
+### Stem Segmentation 
+
+![Alt text](media/segmentation.png?raw=true "Stem point segmentation.")
+
+
+If you included the stem segmentation functionality in your setup of Forest3D then you can use the library for segmenting points for an individual tree in stem and foliage points.
+The process this library uses can be broken down into a few key steps: pointclouds are voxelised, passed through a trained 3D neural network that segments the voxels into stem and foliage classes, then the labelled voxels are converted to low resolution pointclouds, and finally a KD-tree is used to upsample the labelled pointcloud to match its original resolution.
+
+The library can be imported using:
+```
+from forest3D import stemSegmenter
+```
+The stemSegmenter library is similar to the treeDetector library in that it is class-based. The main class is called VoxelStemSeg(), constructed with a config json file from a stem segmentation model as follows:
+```
+segmenter_addr = ''path/to/segmentation/folder''
+with open(os.path.join(segmenter_addr, 'net_config.json')) as json_file:
+    config_dict = json.load(json_file)
+stem_model = stemSegmenter.VoxelStemSeg(**config_dict['model_dict'])
+```
+The stemSegmenter.VoxelStemSeg object you create (here called stem_model) requires that the pointcloud passed into it be delineated, in the form of a list of pointcloud arrays, where each pointcloud array in the list corresponds to the points of a single tree. You might already have the files of delineated trees, which you could read in using the lidar_IO library. Or you might have delineated trees using the treeDetector library earlier in your code. You could use the **labels** array output by the sliding_window() method of your treeDetector.RasterDetector object to produce the list of pointclouds:
+```
+xyzr_list = []
+for i in list(np.unique(labels)):
+    if i > 0:
+        xyzr_list.append(np.hstack((xyz_data_gr[labels==i,:],intensity_gr[labels==i])))
+```
+Remember to skip points labelled with 0 as this is the background class. Once you have the list of tree arrays, call the predict() method of your VoxelStemSeg object:
+```
+seg_list = stem_model.predict(xyzr_list,segmenter_addr)
+```
+with arguments:
+- xyzr_list - list of Nx3 or Nx4 arrays depending on whether your segmentation model uses return intensity information or just x,y,z coordinates. Check this in the net_config.json file of the segmentation model folder by looking at the boolean of the keyword "isReturns". True means it uses return intensity so requires arrays to be Nx4 and False means no return intensity is used so arrays can be either Nx3 or Nx4.
+- segmenter_addr - a string with the path to your segmentation model folder (the same one which has your net_config.json).
+- batchsize - integer, the number of trees processed in parallel (default=5).
+- returnSplit - boolean, if True the pointcloud and labels are seperated (returns two instances instead of one). Default False.
+- dist_threshold - float (default 0.5). During the KD-tree process, if the nearest low res label to a high res point is beyond dist_threshold (metres) then the high res point is removed. This results in the labelled pointcloud having slightly fewer points. If you want to preserve all points, set dist_threshold=float("inf"). Do this if you want the intensity array to align with the labels array.
+
+The output of the predict function is a list of Mx4 arrays (if returnSplit=False), where each array corresponds to a separate tree. The first three columns are x,y and z coordinates. The fourth column is the label (1-foliage, 2-stem). 
+Note: if dist_threshold is finite then the number of points M is different to N for correponding trees because some noisy points are removed during the segmentation process. Therefore you should use the Mx4 array as your new x,y,z coordinates (so the points align with the labels). If dist_method is infinite then M==N.
+
+If you have a GPU with a reasonable amount of VRAM than you can use the batchsize parameter to increase the number of trees processed in parallel to speed up processing time. Likewise, if the default is too big for your computer's memory, use a smaller batchsize. With 11Gb of VRAM I could use a batchsize of 20:
+```
+seg_list = stem_model.predict(xyzr_list,segmenter_addr,batchsize=20)
+```
+
+You can output the labelled pointclouds as asc files and view them in cloudcompare using:
+```
+for i in range(len(seg_list)):
+    lidar_IO.writeXYZ_labelled(os.path.join(output_dir,'labelled_%i.asc'%(i)), seg_list[i][:,:3],labels=seg_list[i][:,3], delimiter=',')
+```
+
+
+**Segmentation uncertainty**
+
+If you want the segmentation labels as well as a measure of the uncertainty of those labels, you can use the predict_uncertianty() method instead:
+```
+seg_list = stem_model.predict_uncertainty(xyzr_list,segmenter_addr)
+```
+This uses the regression variant of the MC dropout technique to output a list of Mx5 arrays (if returnSplit=False), where column 5 is the label and column 4 is the certainty of that label.  Note, by default this process takes 5 times as long (the n_passes argument dictates this). 
+
+See the script example_segmentation_scripts/tumut_uncertainty.py for an example of how the uncertainty can be used and output in several different ways.
+
+## Pre-trained models
+
+Several models have been trained on forest pointcloud data and are available for use. The table describes each model. The appropriate model for your dataset should be the model trained on data most similar to your own dataset. Make sure you have return intensity or colour information for each point if the model requires it.
+
+Acknowledgements to Interpine, UTAS, Forect Corp and the other project partners responsible for collecting the data used to train the models.  
+ 
+
+### Tree detection models
+
 
 | Model name        | Dataset used for training| Location | Species/Age  | Sensor | Description  | 
 | ------------- |:-------------:| -----:| -----:| -----:| -----:|
@@ -299,8 +396,15 @@ Several detection models have been trained on forest pointcloud data and are ava
 
 If '_down5cm' is appended to the filename as in xxx_down5cm.las, it means the original dataset xxx.las was downsampled to 5cm resolution.
 
-Acknowledgements to Interpine, UTAS, Forect Corp and the other project partners responsible for collecting the data used to train the models.  
 
+### Stem segmentation models
+
+| Model name        | Dataset used for training| Location | Species/Age  | Sensor | Description  | 
+| ------------- |:-------------:| -----:| -----:| -----:| -----:|
+| tumut1      | V1_Scanner1_161011_220153_crop001.las  | Tumut NSW |Mature Pine |  VUX-1 ALS (helicopter) | High res pointcloud. Trained on x,y,z and return intensity data.
+| tumut2      | V1_Scanner1_161011_220153_crop001.las  | Tumut NSW |Mature Pine |  VUX-1 ALS (helicopter) | High res pointcloud. Only trained on x,y,z data (no return intensity).
+
+For each segmentation model, points predicted to be foliage are labelled with 1, and points predicted to be stem are labelled with 2. Labels are floats.
 
 ## How to train your own detection model
 
@@ -483,6 +587,88 @@ Inside both config files (training and prediction) make the following changes:
 In yolov3-tiny there are 2 locations to make each of these changes in each config file. In yolov3, there are 3 locations for each change. These changes modify the architecture for the different number of classes.
 
 
+## How to train your own segmentation model
+
+The two main steps to training a segmentation model are to curate a labelled training dataset and then run a script which trains a model.
+
+###Labelling the training data
+
+A training sample for a segmentation model is a single tree with the ground removed and stem, foliage and clutter components labelled. All of this can be done using the segmentation tool of [CloudCompare](https://www.danielgm.net/cc/):
+
+- crop out a single tree
+- crop the ground out
+- crop the tree into numerour segments, where each segment is a single class. E.g you might have several segments for folaige and several segments for stem
+- for each class, save all segments as asci files with the class name in the filename (i.e. foliage, hgStem, lgStem, clutter) into a folder for each tree. hgStem stands for high-grade stem and refers to the lower part of the stem which does not have any branches growing out of it. lgStem stands for low grade stem and is the upper portion of the stem.
+- run the python script **collate_cc_segments.py** for several tree folders. This will create a single asci file with the x, y, z, returns and labels columns, which can be used to train a stem segmentation model.
+
+The code is currently configured for the labels:
+0-foliage, 1-lower stem (hgStem), 2-upper stem (lgStem), 3-clutter. The lower stem and upper stem are collapsed into one class, so you do not need to label these separately (just label a single stem class as either 1 or 2). Likewise, the clutter class gets collapsed with the foliage class. So you do not need to label it as a seperate class, just label clutter as foliage (0).
+
+You also do not have to include the return intensities in this process. But if the information is available, it is helpful to include incase you change your mind later (they can still be registered with the labelled data but it is a more complicated process).
+
+###Training a segmentation model
+
+The python scripts in /train_segmenter_scripts.py are example scripts for training stem segmentation models on the Tumut dataset. **train_tumut1_voxnet.py** uses the return intensity information, whereas **train_tumut2_voxnet.py** does not.
+
+The scripts read in files for individual labelled trees into python and build a list of arrays, where each tree is has own array. Then the indexes used for training and validation are established based on a specified number of validation samples (e.g. 10).
+
+A dictionary with the model and training configuration parameters is created. This is actually setup as a dictionary of three sub-dictionaries: model_dict, train_op_dict and train_model_dict. model_dict has to do with the architecture and is therefore important for doing inference later on (to make sure the inference network replicates the training network). train_op_dict and train_model_dict are both concerned with training the model and therefore are not needed later on for inference. train_op_dict is used to create the training nodes in the tensorflow graph (e.g for the optimiser). train_model_dict contains paramters like the number of epochs and path of where the model should be saved.  
+
+model_dict:
+- input_dims - list of 3 ints, the size of the voxel grid for each tree
+- res - single float or list of 3 floats, the size of the voxels (in the same units as the pointcloud data). These apply to the x,y,z axes. If a single float is given, the same value is applied to all three axes.
+- isReturns - boolean for whether or not to use return intensity information 
+- nClasses - for the model, this should be the number of classes of interest plus 1 for background. E.g. 3 for stem, foliage and background. If you use a number other than 3, changes will have to be made in processLidar.processPC to modify the occupancy grid that gets created.
+
+train_op_dict:
+- opt_method - string, the optimiser used. Options are 'Adam' (default), 'SGD' and 'RMS'.
+- lr - float, the learning rate (default 0.0001)
+- decay_rate - float, fraction by which lr decays. Default None.
+- decay_steps - int, epoch cycle for decaying lr at decay_rate.
+- piecewise_bounds - list of ints, specific epoch numbers to change lr to be piecewise_values.
+- piecewise_values - list of floats, new lr values to happen at piecewise_bounds epochs
+
+train_model_dict;
+- nEpochs - int, number of cycles through the training dataset
+- train_bs - int, batchsize for training
+- val_bs  - int, batchsize for validation
+- augment - boolean, whether to use data augmentation (random rotations or trees about z-axis) default False
+- numAugs - int, number of augmentations to do for each sample (default 3). Only applicable if augment=True
+- keep_prob - float, rate at which neurons are kept active during dropout (training only). Default 1.0, which keeps all neurons.
+- save_epochs - list of ints, which epochs to save the model at
+- save_addr - string, path to folder for saving the model files 
+- save_figure - int, epoch update rate of figure which plots the losses  (default 1)
+
+These three sub-dictionaries are saved within a meta config dictionary and output as a net_config.json file within the segmentation model folder. This net_config.json file is necessary for using the model in the future for inference. It is also a handy record of the parameters used to train a particular model.
+
+Once the config parameters have been specified, training iterator objects are created using the processLidar.iterator_binaryVoxels_pointlabels class. Iterators hold pointcloud data and have functions for calling the next batch of data to be trained on or used for validation. Separate iterator objects are created for training and validation. The construction arguments are the pointcloud, return intensities and labels as seperate lists of arrays, as well as the voxel dimensions, number of classes and batchsize specified in the config. Only pass in the return intensities if you want your model to use them (i.e. isReturns=True):
+```
+train_iter = processLidar.iterator_binaryVoxels_pointlabels([xyz_list[i] for i in train_idx],[label_list[i] for i in train_idx],
+    returns=[intensity_list[i] for i in train_idx],res=model_dict['res'], gridSize=model_dict['input_dims'],numClasses=model_dict['nClasses']-1, batchsize=train_model_dict['train_bs'])
+```
+
+An object of the class stemSegmenter.VoxelStemSeg (the same used for prediction) is constructed with the model config parameters:
+```
+stem_model = stemSegmenter.VoxelStemSeg(**model_dict)
+```
+This builds the neural network as a tensorflow graph. Once constructed, you can setup the graph nodes needed for training by calling the train_op() method:
+```
+stem_model.train_op(**train_op_dict)
+```
+Finally, train the model using the train_model() method, passing in the iterator objects as arguments:
+```
+stem_model.train_model(train_iter, val_iter, **train_model_dict)
+```
+
+When training, you will see the progress printed in the console, and also a png figure which updates at least every epoch inside the folder you chose to save the model in. This figure shows the progression of the training and validation losses. Once the number of epochs reaches those in your save_epochs list (or the total number of training epochs), then a model will be saved as a seperate folder within your output folder. 
+
+When training is finished, put a copy of the net_config.json file inside that model folder, move the folder to a convenient location and then pass the path to that folder as the segmenter model address when you do prediction.
+
+**Tips**
+
+It is highly recommend you use a GPU for training. Because the data is composed of a batch of 3D voxels, the process is slow if you train on a CPU. 
+
+The models themselves actually have a small memory footprint because they are fully-convolutional as opposed to having dense layers. However, during training alot of memory is required for backpropagation. You will have to tune the batchsize and number of augmentations to make sure you have enough memory for training - remember the number of samples scales linearly with the number of augmentations+1. So if your batchsize is 5 and your number of augmentations is 3, then you are actually training on 5*(3+1)=20 samples each batch.
 
 ## Detection Debugging Tips
 

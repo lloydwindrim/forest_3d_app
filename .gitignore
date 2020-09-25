@@ -3,3 +3,4 @@ outputs/
 venv/
 .idea/
 *.pyc
+venv_tf1/
