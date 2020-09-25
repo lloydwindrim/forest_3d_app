@@ -591,7 +591,7 @@ In yolov3-tiny there are 2 locations to make each of these changes in each confi
 
 The two main steps to training a segmentation model are to curate a labelled training dataset and then run a script which trains a model.
 
-###Labelling the training data
+### Labelling the training data
 
 A training sample for a segmentation model is a single tree with the ground removed and stem, foliage and clutter components labelled. All of this can be done using the segmentation tool of [CloudCompare](https://www.danielgm.net/cc/):
 
@@ -606,7 +606,7 @@ The code is currently configured for the labels:
 
 You also do not have to include the return intensities in this process. But if the information is available, it is helpful to include incase you change your mind later (they can still be registered with the labelled data but it is a more complicated process).
 
-###Training a segmentation model
+### Training a segmentation model
 
 The python scripts in /train_segmenter_scripts.py are example scripts for training stem segmentation models on the Tumut dataset. **train_tumut1_voxnet.py** uses the return intensity information, whereas **train_tumut2_voxnet.py** does not.
 
