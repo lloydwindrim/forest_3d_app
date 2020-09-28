@@ -13,6 +13,7 @@ import csv
 from plyfile import PlyData, PlyElement
 import glob
 from laspy.file import File as Lasfile
+import laspy.header as lasHeader
 
 # also works for .asc [delimiter=' ',x=0,y=1,z=2]
 def XYZreadFromCSV(filename,delimiter=',',x=3,y=4,z=5,label=None,returns=None):
@@ -286,4 +287,41 @@ def XYZreadFromCSV_general(filename,delimiter=',',x=3,y=4,z=5,other=None):
 	else:
 		return data[:,[x,y,z] + other].astype(float)
 
+
+def writeLAS(filename,vertex,labels=None,offset=[0,0,0],returns=None):
+	'''
+
+	:param filename: str. path/filename.las
+	:param vertex: float np.array.  Nx3 of points
+	:param labels: float np.array. N labels
+	:param offset: list of floats e.g. [0,0,0]
+	:return:
+	'''
+	if returns is not None:
+		if len(returns.shape)>1:
+			labels = returns[:,0]
+
+	if labels is not None:
+		if len(labels.shape)>1:
+			labels = labels[:,0]
+
+	vertex+=offset
+	hdr = lasHeader.Header()
+	outfile = Lasfile(filename, mode="w", header=hdr)
+	allx = vertex[:,0]
+	ally = vertex[:,1]
+	allz = vertex[:,2]
+	xmin = np.floor(np.min(allx))
+	ymin = np.floor(np.min(ally))
+	zmin = np.floor(np.min(allz))
+	outfile.header.offset = [xmin,ymin,zmin]
+	outfile.header.scale = [0.001,0.001,0.001]
+	outfile.x = allx
+	outfile.y = ally
+	outfile.z = allz
+	if returns is not None:
+		outfile.intensity = returns
+	if labels is not None:
+		outfile.user_data = labels
+	outfile.close()
 

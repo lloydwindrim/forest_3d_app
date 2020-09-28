@@ -24,12 +24,12 @@ ground_pts = ground_removal.load_ground_surface(os.path.join(output_dir,'_ground
 
 
 print("detecting trees...")
-detector_addr = '/home/lloyd/Documents/projects/forest_3d_app/models/detection/hovermap'
+detector_addr = '/home/lloyd/Documents/projects/forest_3d_app/models/detection/hovermap2'
 with open(os.path.join(detector_addr, 'raster_config.json')) as json_file:
     config_dict = json.load(json_file)
 rasterTreeDetector = treeDetector.RasterDetector(**config_dict )
 labels = rasterTreeDetector.sliding_window(detector_addr,xyz_data_gr,colour_data=intensity_gr,ground_pts=ground_pts,
-                                           windowSize = [22,22],stepSize = 15,overlap_thresh=2)
+                                           windowSize = [22,22],stepSize = 15,overlap_thresh=3)
 
 
 

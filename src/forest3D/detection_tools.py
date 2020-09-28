@@ -57,7 +57,7 @@ def find_unique_boxes(boxes,image_size,centres_dist):
 
     return np.unique(np.array(most_square_idx))
 
-def find_unique_boxes2(boxes,centres_dist):
+def find_unique_boxes2(boxes,centres_dist,prioritise='area'):
     # for bounding boxes in normal coords
     centres = (np.vstack([(boxes[:,2]+boxes[:,0])/2,(boxes[:,3]+boxes[:,1])/2]))
     centres = ( np.vstack([np.ones((1,boxes.shape[0])),np.ones((1,boxes.shape[0]))])) * centres
@@ -66,7 +66,10 @@ def find_unique_boxes2(boxes,centres_dist):
         temp = ssd( (np.tile(centres[:,ii],(centres.shape[1],1))).T , centres )
         iii = [j for j, x in enumerate(temp<=centres_dist) if x] #35,150
         if len(iii)>1:
-            iii = iii[np.argmin(np.absolute(1 - ((boxes[iii,2] - boxes[iii,0])/(boxes[iii,3] - boxes[iii,1]))))]
+            if prioritise=='squareness':
+                iii = iii[np.argmin(np.absolute(1 - ((boxes[iii,2] - boxes[iii,0])/(boxes[iii,3] - boxes[iii,1]))))]
+            elif prioritise=='area':
+                iii = iii[np.argmax((boxes[iii,2] - boxes[iii,0])*(boxes[iii,3] - boxes[iii,1]))]
         else:
             iii = ii
         most_square_idx.append(iii)

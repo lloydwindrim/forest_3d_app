@@ -30,9 +30,9 @@ def read_csv(filename,header_rows=[-1]):
         return data_dict
 
 
-def write_csv(filename,data,header=None):
+def write_csv(filename,data,header=None,delimiter=','):
     with open(filename, 'w') as csvfile:
-        spamwriter = csv.writer(csvfile, delimiter=',',quotechar='|', quoting=csv.QUOTE_MINIMAL)
+        spamwriter = csv.writer(csvfile,delimiter=delimiter,quotechar='|', quoting=csv.QUOTE_MINIMAL)
         spamwriter.writerow([header])
         for i in range(np.shape(data)[0]):
             spamwriter.writerow(data[i,:])

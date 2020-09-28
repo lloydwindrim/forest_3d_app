@@ -286,6 +286,11 @@ lidar_IO.writePly_labelled(os.path.join(output_dir,'detection.ply'),xyz_data_gr,
 ```
 xyz_data_gr should have the same number of rows as labels. output_dir is the path to your output directory. Offset is optional here (default [0,0,0,0]). If you used an offset before to avoid unstable calculations, then put the offset here to revert the pointcloud to the correct coordinate space.
 
+Alternatively, you can output the pointcloud as a las file, where the tree ID is stored in the user_data las field:
+```
+lidar_IO.writeLAS(os.path.join(output_dir,'detection.las'),xyz_data_gr,labels,offset=[0,0,0,0])
+```
+
 
 ### Inventory
 
@@ -364,7 +369,11 @@ You can output the labelled pointclouds as asc files and view them in cloudcompa
 for i in range(len(seg_list)):
     lidar_IO.writeXYZ_labelled(os.path.join(output_dir,'labelled_%i.asc'%(i)), seg_list[i][:,:3],labels=seg_list[i][:,3], delimiter=',')
 ```
-
+Or alternatively you can output them as las files, where the stem label falls under the user_data field:
+```
+for i in range(len(seg_list)):
+    lidar_IO.writeLAS(os.path.join(output_dir,'labelled_%i.las'%(i)), seg_list[i][:,:3], labels=seg_list[i][:,3])
+```
 
 **Segmentation uncertainty**
 
@@ -392,7 +401,9 @@ Acknowledgements to Interpine, UTAS, Forect Corp and the other project partners 
 | tumut2      | V1_Scanner1_161011_220153_crop001.las  | Tumut NSW |Mature Pine |  VUX-1 ALS (helicopter) | High res pointcloud. Trained on x,y,z and return intensity data.
 | hvp         | saltwater_31B_1_2.las  | HVP VIC |Mature Pine |  ? ALS ? | Low res ALS. Only trained on x,y,z data (no return intensity).
 | utas | transect_large_vis_dense_down5cm.las | Tasmania | Pine Seedling |  Drone Photogrammetry | Dense photogrammetric pointcloud. Trained on x,y,z with 2 principle components of red,green,blue for each point. 
-| hovermap | Interpine_02_Output_laz1_2_down5cm.las  | Rotorua, NZL |Mature Pine | Hovermap backpack | High res under-canopy data similar to TLS. Trained on x,y,z and return intensity data.
+| hovermap | Interpine_02_Output_laz1_2_down5cm.las  | Rotorua, NZL |Mature Pine | Hovermap backpack | High res and low res under-canopy data similar to TLS. Trained on x,y,z and return intensity data.
+| hovermap2 | Interpine_02_Output_laz1_2_down5cm.las  | Rotorua, NZL |Mature Pine | Hovermap backpack | High res under-canopy data similar to TLS. Trained on x,y,z and return intensity data. 
+
 
 If '_down5cm' is appended to the filename as in xxx_down5cm.las, it means the original dataset xxx.las was downsampled to 5cm resolution.
 
