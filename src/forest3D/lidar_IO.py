@@ -322,6 +322,6 @@ def writeLAS(filename,vertex,labels=None,offset=[0,0,0],returns=None):
 	if returns is not None:
 		outfile.intensity = returns
 	if labels is not None:
-		outfile.user_data = labels
+		outfile.pt_src_id = labels
 	outfile.close()
 

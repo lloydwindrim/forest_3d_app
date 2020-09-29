@@ -286,9 +286,9 @@ lidar_IO.writePly_labelled(os.path.join(output_dir,'detection.ply'),xyz_data_gr,
 ```
 xyz_data_gr should have the same number of rows as labels. output_dir is the path to your output directory. Offset is optional here (default [0,0,0,0]). If you used an offset before to avoid unstable calculations, then put the offset here to revert the pointcloud to the correct coordinate space.
 
-Alternatively, you can output the pointcloud as a las file, where the tree ID is stored in the user_data las field:
+Alternatively, you can output the pointcloud as a las file, where the tree ID is stored in the point source ID las field:
 ```
-lidar_IO.writeLAS(os.path.join(output_dir,'detection.las'),xyz_data_gr,labels,offset=[0,0,0,0])
+lidar_IO.writeLAS(os.path.join(output_dir,'detection.las'),xyz_data_gr,labels,offset=[0,0,0])
 ```
 
 
@@ -369,7 +369,7 @@ You can output the labelled pointclouds as asc files and view them in cloudcompa
 for i in range(len(seg_list)):
     lidar_IO.writeXYZ_labelled(os.path.join(output_dir,'labelled_%i.asc'%(i)), seg_list[i][:,:3],labels=seg_list[i][:,3], delimiter=',')
 ```
-Or alternatively you can output them as las files, where the stem label falls under the user_data field:
+Or alternatively you can output them as las files, where the stem label falls under the point source ID field:
 ```
 for i in range(len(seg_list)):
     lidar_IO.writeLAS(os.path.join(output_dir,'labelled_%i.las'%(i)), seg_list[i][:,:3], labels=seg_list[i][:,3])
