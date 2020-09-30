@@ -299,7 +299,7 @@ def writeLAS(filename,vertex,labels=None,offset=[0,0,0],returns=None):
 	'''
 	if returns is not None:
 		if len(returns.shape)>1:
-			labels = returns[:,0]
+			returns = returns[:,0]
 
 	if labels is not None:
 		if len(labels.shape)>1:

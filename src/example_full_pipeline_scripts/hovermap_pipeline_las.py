@@ -56,8 +56,8 @@ seg_list = stem_model.predict(xyzr_list,segmenter_addr,batchsize=20,dist_thresho
 
 
 print("output segmented trees as individual pointclouds...")
-for i in range(len(seg_list)):
-    lidar_IO.writeLAS(os.path.join(output_dir,'labelled_%i.las'%(i)),seg_list[i][:,:3],labels=seg_list[i][:,3],
+for i,id in enumerate(list(np.unique(labels[labels>0]))):
+    lidar_IO.writeLAS(os.path.join(output_dir,'labelled_%i.las'%(id)),seg_list[i][:,:3],labels=seg_list[i][:,3],
                       returns=MAX_RETURN_INTENSITY*xyzr_list[i][:,3])
 
 
