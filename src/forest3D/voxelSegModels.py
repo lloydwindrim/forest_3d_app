@@ -59,6 +59,6 @@ class Voxnet():
             self._output = tf.layers.conv3d(self._h4, kernel_size=5, filters=nClasses, strides=(1,1,1), padding='same',
                                        activation=None, use_bias=False, data_format=channel_order)
 
-            self._output = tf.transpose(self._output,perm=[0,4,1,2,3]) # swap channels to last first dimension (after batch)
+            self._output = tf.transpose(self._output,perm=[0,4,1,2,3]) # swap channels to first dimension (after batch)
 
         self._vars = [var for var in tf.trainable_variables() if var.name.startswith(mdl_name)]

@@ -15,7 +15,7 @@ from forest3D.voxelSegModels import Voxnet as SegModel
 class VoxelStemSeg():
 
 
-    def __init__(self, input_dims,res,isReturns=False,nClasses=3,mdl_name='segmenter',reuse=None ):
+    def __init__(self, input_dims,res,isReturns=False,nClasses=3,mdl_name='segmenter' ):
 
         self._input_dims = input_dims # [150,150,100]
         self._res = res #[0.1,0.1,0.4]

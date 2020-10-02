@@ -533,8 +533,10 @@ class iterator_binaryVoxels_pointlabels():
 
 
         og_batch = np.empty( ( [self.batchsize*(numAugs+1),1] + self.gridSize.tolist() ) )
-        og_labels_batch = np.empty( ( [self.batchsize*(numAugs+1),self.nb_class+1] + self.gridSize.tolist() ) )
-        og_returns_batch = np.empty(([self.batchsize * (numAugs + 1), 1] + self.gridSize.tolist()))
+        if self.flag_label == 1:
+            og_labels_batch = np.empty( ( [self.batchsize*(numAugs+1),self.nb_class+1] + self.gridSize.tolist() ) )
+        if self.flag_return == 1:
+            og_returns_batch = np.empty(([self.batchsize * (numAugs + 1), 1] + self.gridSize.tolist()))
         for j in range(numAugs+1):
             for i in range(self.batchsize):
                 pc_temp = copy.deepcopy(self.pc_list[self.current_batch[i]])
@@ -547,8 +549,9 @@ class iterator_binaryVoxels_pointlabels():
                 pc_temp.occupancyGrid_Binary( res_=self.res, gridSize_=self.gridSize )
                 og_batch[(j*self.batchsize)+i,...] = pc_temp.og.copy()
                 # labelled occupancy grid
-                pc_temp.occupancyGrid_Labels()
-                og_labels_batch[(j*self.batchsize)+i, ...] = pc_temp.og_labels.copy()
+                if self.flag_label == 1:
+                    pc_temp.occupancyGrid_Labels()
+                    og_labels_batch[(j*self.batchsize)+i, ...] = pc_temp.og_labels.copy()
                 # occupancy grid with returns
                 if self.flag_return == 1:
                     pc_temp.occupancyGrid_Returns()
@@ -564,11 +567,14 @@ class iterator_binaryVoxels_pointlabels():
         self.current_batch[self.current_batch >= self.data_num] = \
             self.current_batch[self.current_batch >= self.data_num] - self.data_num
 
-
-        if self.flag_return == 1:
+        if (self.flag_label == 1) & (self.flag_return == 0):
+            return og_batch, og_labels_batch
+        elif (self.flag_label == 0) & (self.flag_return == 1):
+            return og_batch, og_returns_batch
+        elif (self.flag_label == 1) & (self.flag_return == 1):
             return og_batch, og_labels_batch, og_returns_batch
         else:
-            return og_batch, og_labels_batch
+            return og_batch
 
     def get_pc(self, idx=[1,2,3], augment=False, angle_x=0, angle_y=0, angle_z=30, angle_x_randLim=0, angle_y_randLim=0, outputOffset=False  ):
         # default not to augment, but if so you can specify the rotations. Default rotation only about z. set to none for random rotation

@@ -12,12 +12,13 @@ import tensorflow as tf
 if tf.__version__.split('.')[0]=='2':
     import tensorflow.compat.v1 as tf
     tf.disable_eager_execution()
+    tfd = tf.distributions
+else:
+    tfd = tf.contrib.distributions
 
 import math
 import numpy as np
 from os.path import join, exists, basename, split
-#tfd = tf.contrib.distributions
-
 
 
 
@@ -333,9 +334,9 @@ def loss_weight_decay(wdLambda):
     return tf.multiply( wdLambda , tf.reduce_sum(tf.get_collection('wd')) )
 
 
-# def loss_KL_divergence(posterior, prior):
-#
-#     return tfd.kl_divergence(posterior, prior)
+def loss_KL_divergence(posterior, prior):
+
+    return tfd.kl_divergence(posterior, prior)
 
 def balance_classes(y_target,num_classes):
     """ Calculates the class weights needed to balance the classes, based on the number of samples of each class in the \
