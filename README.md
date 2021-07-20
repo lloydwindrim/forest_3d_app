@@ -12,6 +12,10 @@ All written in python, the app libraries can be found in src/Forest3D. Some exam
 
 Authors: Dr. Lloyd Windrim and Dr. Mitch Bryson
 
+If you make use of this repo, please cite:
+
+Windrim and Bryson. [Detection, Segmentation, and Model Fitting of Individual Tree Stems from Airborne Laser Scanning of Forests Using Deep Learning](https://www.mdpi.com/2072-4292/12/9/1469). Remote Sensing 12.9 (2020).
+
 **Readme contents**:
 - [Setup/Installation](#setting-up-forest-3d-app)
 - [Quickstart](#quickstart)
