@@ -421,6 +421,14 @@ If '_down5cm' is appended to the filename as in xxx_down5cm.las, it means the or
 
 For each segmentation model, points predicted to be foliage are labelled with 1, and points predicted to be stem are labelled with 2. Labels are floats.
 
+## How to access pre-trained models
+
+Pre-trained models must be downloaded separately from the main Forest3DApp repository: you can download the model through this link:
+
+https://drive.google.com/file/d/1E4gHTo2Zdae51JDXHXtwgjGI2wtn1yN-/view?usp=sharing
+
+Once downloaded, you will need to uncompress the zip file and place the "models" directory inside the "Forest3DApp" directory on your local copy.
+
 ## How to train your own detection model
 
 Training your own detection model comprising three main steps: generating raster images, labelling raster images with bounding boxes and training a model using darknet. 
@@ -716,7 +724,11 @@ Tree-level inventory outputs can be found in the /media folder as *.csv files. T
 
 ![Alt text](media/drawing5.png?raw=true "Height distribution of trees mapped spatially for several datasets.")
 
+## Functions for high-resolution (TLS/Hovermap) tree detection
 
+The Forest3DApp repository also contains a number of additional scripts and methods that can be used to process high-resolution pointcloud files (such as from TLS scanners or the Hovermap sensor) using a non-machine learning based pipeline (see further details in project final report). These scripts are located in the sub-folder "hovermap" in the "src" directory.
+
+To run this pipeline, open up the script "extract_stems_script.py" and edit (a) the path to the pointcloud file to process and (b) the path to the output directory to which processed data will be placed.
 
 ## Related publications
 
