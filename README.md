@@ -403,7 +403,7 @@ Acknowledgements to Interpine, UTAS, Forect Corp and the other project partners 
 | ------------- |:-------------:| -----:| -----:| -----:| -----:|
 | tumut1      | V1_Scanner1_161011_220153_crop001.las  | Tumut NSW |Mature Pine |  VUX-1 ALS (helicopter) | High res pointcloud. Only trained on x,y,z data (no return intensity).
 | tumut2      | V1_Scanner1_161011_220153_crop001.las  | Tumut NSW |Mature Pine |  VUX-1 ALS (helicopter) | High res pointcloud. Trained on x,y,z and return intensity data.
-| hvp         | saltwater_31B_1_2.las  | HVP VIC |Mature Pine |  ? ALS ? | Low res ALS. Only trained on x,y,z data (no return intensity).
+| hvp         | saltwater_31B_1_2.las  | HQP | Mature Pine |  ? ALS ? | Low res ALS. Only trained on x,y,z data (no return intensity).
 | utas | transect_large_vis_dense_down5cm.las | Tasmania | Pine Seedling |  Drone Photogrammetry | Dense photogrammetric pointcloud. Trained on x,y,z with 2 principle components of red,green,blue for each point. 
 | hovermap | Interpine_02_Output_laz1_2_down5cm.las  | Rotorua, NZL |Mature Pine | Hovermap backpack | High res and low res under-canopy data similar to TLS. Trained on x,y,z and return intensity data.
 | hovermap2 | Interpine_02_Output_laz1_2_down5cm.las  | Rotorua, NZL |Mature Pine | Hovermap backpack | High res under-canopy data similar to TLS. Trained on x,y,z and return intensity data. 
