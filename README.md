@@ -728,6 +728,8 @@ Tree-level inventory outputs can be found in the /media folder as *.csv files. T
 
 The Forest3DApp repository also contains a number of additional scripts and methods that can be used to process high-resolution pointcloud files (such as from TLS scanners or the Hovermap sensor) using a non-machine learning based pipeline (see further details in project final report). These scripts are located in the sub-folder "hovermap" in the "src" directory.
 
+In addition to the required packages listed above, this script also makes use of the open-source package "Open3D" which you will need to install using pip. You can install this by typing "pip install open3d" in the command prompt.
+
 To run this pipeline, open up the script "extract_stems_script.py" and edit (a) the path to the pointcloud file to process and (b) the path to the output directory to which processed data will be placed.
 
 ## Related publications
