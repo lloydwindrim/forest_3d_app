@@ -23,6 +23,14 @@ RUN apt-get update && apt-get install -y \
     gfortran \
     libhdf5-dev \
     python3-dev \
+    libffi6 \
+    libffi-dev \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN apt-get update \
+    && apt-get install build-essential -y \
+    && apt-get install manpages-dev -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -56,6 +64,7 @@ COPY ./requirements_seg.txt /3d_forest/requirements_seg.txt
 RUN pip install --upgrade pip \
     && pip install -r /3d_forest/requirements.txt \
     && pip install -r /3d_forest/requirements_seg.txt \
+    && pip install jupyter \
     && rm -rf /root/.cache/pip
 
 ENTRYPOINT [ "/bin/bash", "-l", "-c" ]
