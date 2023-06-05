@@ -24,6 +24,11 @@ RUN apt-get update && apt-get install -y \
     libhdf5-dev \
     python3-dev \
     libffi6 \
+    ffmpeg \
+    libsm6 \
+    libxext6 \
+    curl \
+    nvidia-cuda-toolkit \
     libffi-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
@@ -50,6 +55,7 @@ ENV PATH=/3d_forest/miniconda3/bin:$PATH
 RUN conda update -n base -c defaults conda \
     && conda create -n 3d_forest python=3.5 \
     && conda clean -ya
+
 
 # Activate conda env
 ENV PATH=/3d_forest/miniconda3/envs/3d_forest/bin:$PATH
